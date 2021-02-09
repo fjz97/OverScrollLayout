@@ -160,8 +160,8 @@ public class OverScrollLayout extends RelativeLayout {
 
         mOverScrollView.layout(r - mOverScrollView.getMeasuredWidth(), t, r, b);
 
-        int textTop = (int) ((t + b) / 2f - mOverScrollTextView.getMeasuredHeight() / 2f);
-        int textBottom = (int) ((t + b) / 2f + mOverScrollTextView.getMeasuredHeight() / 2f);
+        int textTop = (int) (height / 2f - mOverScrollTextView.getMeasuredHeight() / 2f);
+        int textBottom = (int) (height / 2f + mOverScrollTextView.getMeasuredHeight() / 2f);
         mOverScrollTextView.layout(r, textTop, r + mOverScrollTextView.getMeasuredWidth(), textBottom);
 
         //设置初始位置
