@@ -11,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.TranslateAnimation;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -80,14 +79,14 @@ public class OverScrollLayout extends RelativeLayout {
     private Rect originalRect = new Rect();
 
     /**
-     * TextView初始位置
-     */
-    private Rect textOriginalRect = new Rect();
-
-    /**
      * 触摸时的横向偏移
      */
     private float startX;
+
+    /**
+     * 滑动的距离
+     */
+    private int scrollX;
 
     /**
      * 是否移动
@@ -166,7 +165,6 @@ public class OverScrollLayout extends RelativeLayout {
 
         //设置初始位置
         originalRect.set(l, t, t + width, t + height);
-        textOriginalRect.set(r, textTop, r + mOverScrollTextView.getMeasuredWidth(), textBottom);
     }
 
     @Override
@@ -190,11 +188,11 @@ public class OverScrollLayout extends RelativeLayout {
                 startX = ev.getX();
             case MotionEvent.ACTION_MOVE:
                 float nowX = ev.getX();
-                int scrollX = (int) ((nowX - startX) * DAMPING);
+                scrollX = (int) (nowX - startX);
                 if (isCanPullLeft() && scrollX < 0) {
-                    int absScrollX = Math.abs(scrollX);
+                    int absScrollX = Math.abs((int) ((nowX - startX) * DAMPING));
                     int textScrollX = Math.abs((int) ((nowX - startX) * TEXT_DAMPING));
-                    mChildView.layout(originalRect.left - absScrollX, originalRect.top, originalRect.right - absScrollX, originalRect.bottom);
+                    mChildView.setTranslationX(-absScrollX);
                     if (absScrollX < OVER_SCROLL_SIZE) {
                         if (absScrollX >= OVER_SCROLL_STATE_CHANGE_SIZE) {
                             mOverScrollTextView.setText(OVER_SCROLL_CHANGE_TEXT);
@@ -202,7 +200,7 @@ public class OverScrollLayout extends RelativeLayout {
                             mOverScrollTextView.setText(OVER_SCROLL_TEXT);
                         }
                         mOverScrollView.startOverScroll(OVER_SCROLL_SIZE - absScrollX, originalRect.top, OVER_SCROLL_SIZE + absScrollX, originalRect.bottom);
-                        mOverScrollTextView.layout(textOriginalRect.left - textScrollX, textOriginalRect.top, textOriginalRect.right - textScrollX, textOriginalRect.bottom);
+                        mOverScrollTextView.setTranslationX(-textScrollX);
                     }
                     isMoved = true;
                     isRecyclerResult = false;
@@ -237,14 +235,13 @@ public class OverScrollLayout extends RelativeLayout {
             return;//如果没有移动布局，则跳过执行
         }
 
-        TranslateAnimation rvAnim = new TranslateAnimation(mChildView.getLeft() - originalRect.left, 0, 0, 0);
-        rvAnim.setDuration(ANIM_DURATION);
-        mChildView.startAnimation(rvAnim);
-        mChildView.layout(originalRect.left, originalRect.top, originalRect.right, originalRect.bottom);
+        mChildView.animate()
+                .setDuration(ANIM_DURATION)
+                .translationX(-mChildView.getLeft());
 
-        TranslateAnimation overTextAnim = new TranslateAnimation(mOverScrollView.getLeft(), originalRect.left, 0, 0);
-        mOverScrollTextView.startAnimation(overTextAnim);
-        mOverScrollTextView.layout(originalRect.right, originalRect.top, originalRect.right + mOverScrollTextView.getWidth(), originalRect.bottom);
+        mOverScrollTextView.animate()
+                .setDuration((long) (ANIM_DURATION * (DAMPING / TEXT_DAMPING)))
+                .translationX(-scrollX * TEXT_DAMPING);
 
         ValueAnimator overViewAnim = ValueAnimator.ofInt(OVER_SCROLL_SIZE - mOverScrollView.left, 0);
         overViewAnim.setDuration(ANIM_DURATION);
@@ -317,7 +314,7 @@ public class OverScrollLayout extends RelativeLayout {
 
         @Override
         protected void onDraw(Canvas canvas) {
-            canvas.drawArc((float) left, (float) top, (float) right, (float) bottom, 0f, 360f, false, mOverScrollPaint);
+            canvas.drawArc(left, top, right, bottom, 0f, 360f, false, mOverScrollPaint);
         }
 
         public void startOverScroll(int left, int top, int right, int bottom) {
