@@ -60,6 +60,12 @@ public class MainActivity extends AppCompatActivity {
             MovieHolder(@NonNull View itemView) {
                 super(itemView);
                 iv = itemView.findViewById(R.id.iv_movie);
+                iv.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(MainActivity.this, "item点击", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }
     }

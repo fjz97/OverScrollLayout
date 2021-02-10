@@ -2,13 +2,17 @@ package com.fjz97.overscrolllayout;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -26,37 +30,52 @@ public class OverScrollLayout extends RelativeLayout {
     /**
      * 回弹时间
      */
-    private static final int ANIM_DURATION = 400;
+    private int animDuration;
 
     /**
      * 弹出View的最大宽度
      */
-    private static final int OVER_SCROLL_SIZE = 120;
+    private int overScrollSize;
 
     /**
      * 弹出TextView变化的宽度
      */
-    private static final int OVER_SCROLL_STATE_CHANGE_SIZE = 96;
+    private int overScrollStateChangeSize;
 
     /**
      * 阻尼
      */
-    private static final float DAMPING = .3f;
+    private float damping;
 
     /**
-     *
+     * 文本阻尼
      */
-    private static final float TEXT_DAMPING = .2f;
+    private float textDamping;
 
     /**
      * 弹出文本
      */
-    private static final String OVER_SCROLL_TEXT = "查看更多";
+    private String overScrollText;
 
     /**
      * 弹出变化文本
      */
-    private static final String OVER_SCROLL_CHANGE_TEXT = "释放查看";
+    private String overScrollChangeText;
+
+    /**
+     * 文本字体大小
+     */
+    private float textSize;
+
+    /**
+     * 文本字体颜色
+     */
+    private int textColor;
+
+    /**
+     * 弹出View颜色
+     */
+    private int overScrollColor;
 
     /**
      * 子View
@@ -94,9 +113,9 @@ public class OverScrollLayout extends RelativeLayout {
     private boolean isMoved;
 
     /**
-     *
+     * 是否拦截触摸事件
      */
-    private boolean isRecyclerResult;
+    private boolean intercept;
 
     /**
      * 释放回调
@@ -113,18 +132,30 @@ public class OverScrollLayout extends RelativeLayout {
 
     public OverScrollLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.OverScrollLayout);
+        animDuration = ta.getInteger(R.styleable.OverScrollLayout_animDuration, 400);
+        overScrollSize = ta.getInteger(R.styleable.OverScrollLayout_overScrollSize, 120);
+        overScrollStateChangeSize = ta.getInt(R.styleable.OverScrollLayout_overScrollStateChangeSize, 96);
+        damping = ta.getFloat(R.styleable.OverScrollLayout_damping, .3f);
+        textDamping = ta.getFloat(R.styleable.OverScrollLayout_textDamping, .2f);
+        overScrollText = ta.getString(R.styleable.OverScrollLayout_overScrollText);
+        overScrollChangeText = ta.getString(R.styleable.OverScrollLayout_overScrollChangeText);
+        textSize = ta.getDimensionPixelSize(R.styleable.OverScrollLayout_textSize, 22);
+        textColor = ta.getColor(R.styleable.OverScrollLayout_textColor, Color.parseColor("#CDCDCD"));
+        overScrollColor = ta.getColor(R.styleable.OverScrollLayout_overScrollColor, Color.parseColor("#F5F5F5"));
+        ta.recycle();
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mOverScrollView = new OverScrollView(getContext());
+        mOverScrollView = new OverScrollView(getContext(), overScrollColor);
         mOverScrollTextView = new TextView(getContext());
         mOverScrollTextView.setEms(1);
-        mOverScrollTextView.setLineSpacing(0, 0.8f);
-        mOverScrollTextView.setText(OVER_SCROLL_TEXT);
-        mOverScrollTextView.setTextSize(11f);
-        mOverScrollTextView.setTextColor(Color.parseColor("#CDCDCD"));
+        mOverScrollTextView.setLineSpacing(0, .8f);
+        mOverScrollTextView.setText(overScrollText);
+        mOverScrollTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, textSize);
+        mOverScrollTextView.setTextColor(textColor);
         addView(mOverScrollView);
         addView(mOverScrollTextView);
     }
@@ -143,10 +174,10 @@ public class OverScrollLayout extends RelativeLayout {
                 getMeasuredWidth() - getPaddingLeft() - getPaddingRight(),
                 MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(
                 getMeasuredHeight() - getPaddingTop() - getPaddingBottom(), MeasureSpec.AT_MOST));
-        mOverScrollView.measure(MeasureSpec.makeMeasureSpec(OVER_SCROLL_SIZE,
+        mOverScrollView.measure(MeasureSpec.makeMeasureSpec(overScrollSize,
                 MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(
                 getMeasuredHeight() - getPaddingTop() - getPaddingBottom(), MeasureSpec.AT_MOST));
-        mOverScrollTextView.measure(MeasureSpec.makeMeasureSpec(OVER_SCROLL_SIZE,
+        mOverScrollTextView.measure(MeasureSpec.makeMeasureSpec(overScrollSize,
                 MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(
                 getMeasuredHeight() - getPaddingTop() - getPaddingBottom(), MeasureSpec.AT_MOST));
     }
@@ -190,25 +221,25 @@ public class OverScrollLayout extends RelativeLayout {
                 float nowX = ev.getX();
                 scrollX = (int) (nowX - startX);
                 if (isCanPullLeft() && scrollX < 0) {
-                    int absScrollX = Math.abs((int) ((nowX - startX) * DAMPING));
-                    int textScrollX = Math.abs((int) ((nowX - startX) * TEXT_DAMPING));
+                    int absScrollX = Math.abs((int) ((nowX - startX) * damping));
+                    int textScrollX = Math.abs((int) ((nowX - startX) * textDamping));
                     mChildView.setTranslationX(-absScrollX);
-                    if (absScrollX < OVER_SCROLL_SIZE) {
-                        if (absScrollX >= OVER_SCROLL_STATE_CHANGE_SIZE) {
-                            mOverScrollTextView.setText(OVER_SCROLL_CHANGE_TEXT);
+                    if (absScrollX < overScrollSize) {
+                        if (absScrollX >= overScrollStateChangeSize) {
+                            mOverScrollTextView.setText(overScrollChangeText);
                         } else {
-                            mOverScrollTextView.setText(OVER_SCROLL_TEXT);
+                            mOverScrollTextView.setText(overScrollText);
                         }
-                        mOverScrollView.startOverScroll(OVER_SCROLL_SIZE - absScrollX, originalRect.top, OVER_SCROLL_SIZE + absScrollX, originalRect.bottom);
+                        mOverScrollView.startOverScroll(overScrollSize - absScrollX, originalRect.top, overScrollSize + absScrollX, originalRect.bottom);
                         mOverScrollTextView.setTranslationX(-textScrollX);
                     }
                     isMoved = true;
-                    isRecyclerResult = false;
+                    intercept = false;
                     return true;
                 } else {
                     startX = ev.getX();
                     isMoved = false;
-                    isRecyclerResult = true;
+                    intercept = true;
                     recoverLayout();
                     return super.dispatchTouchEvent(ev);
                 }
@@ -217,7 +248,7 @@ public class OverScrollLayout extends RelativeLayout {
                     recoverLayout();
                 }
 
-                if (isRecyclerResult) {
+                if (intercept) {
                     return super.dispatchTouchEvent(ev);
                 } else {
                     return true;
@@ -236,26 +267,26 @@ public class OverScrollLayout extends RelativeLayout {
         }
 
         mChildView.animate()
-                .setDuration(ANIM_DURATION)
+                .setDuration(animDuration)
                 .translationX(-mChildView.getLeft());
 
         mOverScrollTextView.animate()
-                .setDuration((long) (ANIM_DURATION * (DAMPING / TEXT_DAMPING)))
-                .translationX(-scrollX * TEXT_DAMPING);
+                .setDuration((long) (animDuration * (damping / textDamping)))
+                .translationX(-scrollX * textDamping);
 
-        ValueAnimator overViewAnim = ValueAnimator.ofInt(OVER_SCROLL_SIZE - mOverScrollView.left, 0);
-        overViewAnim.setDuration(ANIM_DURATION);
+        ValueAnimator overViewAnim = ValueAnimator.ofInt(overScrollSize - mOverScrollView.left, 0);
+        overViewAnim.setDuration(animDuration);
         overViewAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 int offset = (int) animation.getAnimatedValue();
-                mOverScrollView.startOverScroll(OVER_SCROLL_SIZE - offset, originalRect.top, OVER_SCROLL_SIZE + offset, originalRect.bottom);
+                mOverScrollView.startOverScroll(overScrollSize - offset, originalRect.top, overScrollSize + offset, originalRect.bottom);
             }
         });
         overViewAnim.start();
 
         //回调
-        if (OVER_SCROLL_SIZE - mOverScrollView.left >= OVER_SCROLL_STATE_CHANGE_SIZE) {
+        if (overScrollSize - mOverScrollView.left >= overScrollStateChangeSize) {
             if (mOnOverScrollReleaseListener != null) {
                 mOnOverScrollReleaseListener.onRelease();
             }
@@ -289,6 +320,86 @@ public class OverScrollLayout extends RelativeLayout {
         return false;
     }
 
+    public int getAnimDuration() {
+        return animDuration;
+    }
+
+    public void setAnimDuration(int animDuration) {
+        this.animDuration = animDuration;
+    }
+
+    public int getOverScrollSize() {
+        return overScrollSize;
+    }
+
+    public void setOverScrollSize(int overScrollSize) {
+        this.overScrollSize = overScrollSize;
+    }
+
+    public int getOverScrollStateChangeSize() {
+        return overScrollStateChangeSize;
+    }
+
+    public void setOverScrollStateChangeSize(int overScrollStateChangeSize) {
+        this.overScrollStateChangeSize = overScrollStateChangeSize;
+    }
+
+    public float getDamping() {
+        return damping;
+    }
+
+    public void setDamping(float damping) {
+        this.damping = damping;
+    }
+
+    public float getTextDamping() {
+        return textDamping;
+    }
+
+    public void setTextDamping(float textDamping) {
+        this.textDamping = textDamping;
+    }
+
+    public String getOverScrollText() {
+        return overScrollText;
+    }
+
+    public void setOverScrollText(String overScrollText) {
+        this.overScrollText = overScrollText;
+    }
+
+    public String getOverScrollChangeText() {
+        return overScrollChangeText;
+    }
+
+    public void setOverScrollChangeText(String overScrollChangeText) {
+        this.overScrollChangeText = overScrollChangeText;
+    }
+
+    public float getTextSize() {
+        return textSize;
+    }
+
+    public void setTextSize(float textSize) {
+        this.textSize = textSize;
+    }
+
+    public int getTextColor() {
+        return textColor;
+    }
+
+    public void setTextColor(int textColor) {
+        this.textColor = textColor;
+    }
+
+    public int getOverScrollColor() {
+        return overScrollColor;
+    }
+
+    public void setOverScrollColor(int overScrollColor) {
+        this.overScrollColor = overScrollColor;
+    }
+
     public void setOnOverScrollReleaseListener(OnOverScrollReleaseListener onOverScrollReleaseListener) {
         mOnOverScrollReleaseListener = onOverScrollReleaseListener;
     }
@@ -303,13 +414,13 @@ public class OverScrollLayout extends RelativeLayout {
 
         int left, top, right, bottom;
 
-        public OverScrollView(Context context) {
+        public OverScrollView(Context context, int color) {
             super(context);
 
             mOverScrollPaint = new Paint();
             mOverScrollPaint.setStyle(Paint.Style.FILL);
             mOverScrollPaint.setAntiAlias(true);
-            mOverScrollPaint.setColor(Color.parseColor("#F5F5F5"));
+            mOverScrollPaint.setColor(color);
         }
 
         @Override

@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:overscrolllayout="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <com.fjz97.overscrolllayout.OverScrollLayout
         android:id="@+id/osl"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        overscrolllayout:animDuration="400"
+        overscrolllayout:damping="0.3"
+        overscrolllayout:overScrollChangeText="释放查看"
+        overscrolllayout:overScrollColor="#F5F5F5"
+        overscrolllayout:overScrollSize="120"
+        overscrolllayout:overScrollStateChangeSize="96"
+        overscrolllayout:overScrollText="查看更多"
+        overscrolllayout:textColor="#CDCDCD"
+        overscrolllayout:textDamping="0.2"
+        overscrolllayout:textSize="11sp">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv"

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="OverScrollLayout">
+        <attr name="animDuration" format="integer" />
+        <attr name="overScrollSize" format="integer" />
+        <attr name="overScrollStateChangeSize" format="integer" />
+        <attr name="damping" format="float" />
+        <attr name="textDamping" format="float" />
+        <attr name="overScrollText" format="string" />
+        <attr name="overScrollChangeText" format="string" />
+        <attr name="textSize" format="dimension" />
+        <attr name="textColor" format="reference|color" />
+        <attr name="overScrollColor" format="reference|color" />
+    </declare-styleable>
+</resources>
