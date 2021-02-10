@@ -118,6 +118,11 @@ public class OverScrollLayout extends RelativeLayout {
     private boolean intercept;
 
     /**
+     * 是否可以overScroll
+     */
+    private boolean canOverScroll;
+
+    /**
      * 释放回调
      */
     private OnOverScrollReleaseListener mOnOverScrollReleaseListener;
@@ -133,6 +138,7 @@ public class OverScrollLayout extends RelativeLayout {
     public OverScrollLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.OverScrollLayout);
+        canOverScroll = ta.getBoolean(R.styleable.OverScrollLayout_canOverScroll, true);
         animDuration = ta.getInteger(R.styleable.OverScrollLayout_animDuration, 400);
         overScrollSize = ta.getInteger(R.styleable.OverScrollLayout_overScrollSize, 120);
         overScrollStateChangeSize = ta.getInt(R.styleable.OverScrollLayout_overScrollStateChangeSize, 96);
@@ -297,12 +303,14 @@ public class OverScrollLayout extends RelativeLayout {
      * 判断是否可以左拉
      */
     private boolean isCanPullLeft() {
-        final RecyclerView.Adapter adapter = mChildView.getAdapter();
+        if (!canOverScroll) {
+            return false;
+        }
 
+        final RecyclerView.Adapter adapter = mChildView.getAdapter();
         if (adapter == null) {
             return true;
         }
-
         final int lastItemPosition = adapter.getItemCount() - 1;
         final int lastVisiblePosition = ((LinearLayoutManager) mChildView.getLayoutManager()).findLastVisibleItemPosition();
 
@@ -318,6 +326,14 @@ public class OverScrollLayout extends RelativeLayout {
         }
 
         return false;
+    }
+
+    public void enableOverScroll() {
+        canOverScroll = true;
+    }
+
+    public void disableOverScroll() {
+        canOverScroll = false;
     }
 
     public int getAnimDuration() {

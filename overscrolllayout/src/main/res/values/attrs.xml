@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="OverScrollLayout">
+        <attr name="canOverScroll" format="boolean" />
         <attr name="animDuration" format="integer" />
         <attr name="overScrollSize" format="integer" />
         <attr name="overScrollStateChangeSize" format="integer" />

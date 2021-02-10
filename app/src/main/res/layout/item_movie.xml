@@ -3,5 +3,4 @@
     android:id="@+id/iv_movie"
     android:layout_width="100dp"
     android:layout_height="150dp"
-    android:scaleType="centerCrop"
-    android:src="@drawable/movie" />
+    android:scaleType="centerCrop" />
